@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentic-rag-service"
+version = "0.1.0"
+description = "Async FastAPI service with a corrective RAG agent (LangGraph) and local FastEmbed embeddings"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+
+dependencies = [
+    # Web framework + ASGI server
+    "fastapi>=0.139.0,<1.0.0",
+    "uvicorn[standard]>=0.34.0,<1.0.0",
+    "python-multipart>=0.0.18,<1.0.0",
+
+    # Config (12-factor: all settings from env)
+    "pydantic-settings>=2.9.0,<3.0.0",
+
+    "langchain-core>=1.4.9,<2.0.0",
+    "langchain-text-splitters>=1.1.0,<2.0.0",
+
+    # LangGraph corrective-RAG agent
+    "langgraph>=1.2.5,<1.3.0",
+
+    # LLM provider adapters
+    "langchain-anthropic>=1.4.0,<2.0.0",
+    "langchain-google-genai>=4.2.0,<5.0.0",
+
+    # Vector store
+    "chromadb>=1.3.5,<2.0.0",
+    "langchain-chroma>=1.1.0,<2.0.0",
+
+    # Local embeddings (no API key; ONNX runtime)
+    "fastembed>=0.7.0,<1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.1.0,<10.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "httpx>=0.28.0,<1.0.0",
+    "ruff>=0.9.0,<1.0.0",
+]
+
+# ---------------------------------------------------------------------------
+# Tool configuration
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]   # pycodestyle errors, pyflakes, isort, pyupgrade
+ignore = ["E501"]                  # line length enforced by formatter, not linter
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

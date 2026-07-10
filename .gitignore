@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# Package installer artefacts
+pip-log.txt
+pip-delete-this-directory.txt
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ruff
+.ruff_cache/
+
+# Chroma vector store persistence (local dev data — not tracked)
+chroma_data/
+.chroma/
+
+# macOS
+.DS_Store
+
+# IDE — JetBrains (PyCharm, etc.)
+.idea/
+
+# Local
+docs/
+
+# IDE — VS Code
+.vscode/
+
+# mypy / type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Byte-compiled / optimised / DLL files left by various tools
+*.spec
