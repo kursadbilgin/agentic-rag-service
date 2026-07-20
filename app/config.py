@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     google_api_key: str = ""
     google_model: str = "gemini-2.5-flash"
 
-    chroma_persist_dir: str = "./chroma_data"
-    chroma_collection: str = "rag_docs"
+    database_url: str = "postgresql+psycopg://rag:rag@localhost:5432/rag"
+    vector_collection: str = "rag_docs"
 
     retrieval_top_k: int = 4
     max_query_rewrites: int = 1
