@@ -17,5 +17,19 @@ services:
       timeout: 5s
       retries: 10
 
+  app:
+    build:
+      context: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      DATABASE_URL: postgresql+psycopg://rag:rag@postgres:5432/rag
+    ports:
+      - "8000:8000"
+
 volumes:
   postgres_data:
