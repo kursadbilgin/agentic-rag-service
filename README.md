@@ -102,6 +102,36 @@ Every setting lives in `.env` (see `.env.example` for the full contract):
 | `MAX_QUERY_REWRITES` | `1` | `0` disables self-correction |
 | `EMBED_MODEL` | `paraphrase-multilingual-MiniLM-L12-v2` | Multilingual, 384-dim; rebuild the image with the same `--build-arg EMBED_MODEL` if you change it |
 
+## Running on Kubernetes
+
+The manifests in `k8s/` are cluster-agnostic (verified on minikube, valid on kind/k3s/a real cluster) and deploy into their own `agentic-rag` namespace.
+
+```bash
+minikube start
+minikube image build -t agentic-rag-service:local .
+
+kubectl apply -f k8s/namespace.yaml
+kubectl -n agentic-rag create secret generic agentic-rag-secrets \
+  --from-literal=ANTHROPIC_API_KEY=sk-... --from-literal=GOOGLE_API_KEY=
+
+kubectl apply -f k8s/postgres.yaml -f k8s/deployment.yaml -f k8s/service.yaml
+kubectl -n agentic-rag get pods -w
+
+kubectl -n agentic-rag port-forward svc/agentic-rag-service 8000:80
+curl -s localhost:8000/health
+```
+
+| Choice | Reason |
+|---|---|
+| Own namespace | `postgres` is a generic name; in a shared `default` namespace it collides with other workloads |
+| Probes on `/health` | The endpoint touches neither the LLM nor the database, so provider latency cannot get the pod killed or drained |
+| Secret via `envFrom` | API keys come from a Secret created out of band; non-secret config stays as plain env vars |
+| `Recreate` for postgres | Its `ReadWriteOnce` volume cannot be mounted by a new pod while the old one holds it |
+| `memory: 2Gi` limit | The ONNX embedding model is resident in every pod |
+| Non-root image | Runs as UID 1001 in group 0 with `chmod g=u`, so OpenShift's arbitrary-UID model works; `runAsNonRoot` and dropped capabilities are enforced in the pod spec |
+
+The bundled `k8s/postgres.yaml` is dev-only — in production point `DATABASE_URL` at a managed database (RDS/Cloud SQL) or an operator-managed cluster.
+
 ## Design decisions
 
 - **Bounded self-correction.** Rewrites are capped, so worst-case latency and token cost stay predictable. An unbounded correction loop is not something you can operate.
@@ -133,4 +163,5 @@ app/
   schemas.py       request & response models
 scripts/ingest.py  bulk-load data/sample_docs/
 tests/             unit, agent-routing and API tests
+k8s/               namespace, postgres, deployment, service, secret template
 ```

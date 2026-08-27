@@ -1,0 +1,6 @@
+# Everything lives in its own namespace: resource names like "postgres" are
+# generic and would collide with other workloads in "default".
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agentic-rag

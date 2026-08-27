@@ -17,6 +17,10 @@ RUN python -c "from fastembed import TextEmbedding; TextEmbedding(model_name='${
 COPY app ./app
 COPY scripts ./scripts
 
+RUN chgrp -R 0 /srv /opt/fastembed && chmod -R g=u /srv /opt/fastembed
+
+USER 1001
+
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \

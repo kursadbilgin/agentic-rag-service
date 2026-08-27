@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: agentic-rag
+  name: agentic-rag-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agentic-rag-service
+  template:
+    metadata:
+      labels:
+        app: agentic-rag-service
+    spec:
+      containers:
+        - name: app
+          image: agentic-rag-service:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            # Non-secret configuration stays in plain sight.
+            - name: LLM_PROVIDER
+              value: anthropic
+            - name: DATABASE_URL
+              value: postgresql+psycopg://rag:rag@postgres:5432/rag
+          # API keys come from a Secret created out of band.
+          envFrom:
+            - secretRef:
+                name: agentic-rag-secrets
+          # /health touches neither the LLM nor the database, so a slow provider
+          # can neither get the pod killed nor pulled out of the service.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 250m
+              # The ONNX embedding model is resident in memory in every pod.
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]

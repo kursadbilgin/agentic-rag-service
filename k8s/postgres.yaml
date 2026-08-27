@@ -1,0 +1,77 @@
+# Dev-only PostgreSQL for local clusters (minikube/kind). In production use a
+# managed database (RDS/Cloud SQL) or an operator/Helm chart and point
+# DATABASE_URL at it — a single-replica Deployment on an RWO volume is not HA.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: agentic-rag
+  name: postgres-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: agentic-rag
+  name: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: agentic-rag
+  name: postgres
+spec:
+  replicas: 1
+  # ReadWriteOnce volume: a rolling update would leave the new pod unable to
+  # mount it, so the old pod has to die first.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: pgvector/pgvector:pg17
+          env:
+            - name: POSTGRES_USER
+              value: rag
+            - name: POSTGRES_PASSWORD
+              value: rag
+            - name: POSTGRES_DB
+              value: rag
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - containerPort: 5432
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "rag", "-d", "rag"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: postgres-data
